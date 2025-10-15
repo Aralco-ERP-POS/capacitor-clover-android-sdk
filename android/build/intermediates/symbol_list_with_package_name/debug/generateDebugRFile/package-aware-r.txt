@@ -1,0 +1,2 @@
+com.tituspeterson.capacitor.cloversdk
+string clover_android_sdk_plugin_name

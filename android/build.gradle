@@ -1,0 +1,74 @@
+import org.gradle.api.JavaVersion
+
+apply plugin: 'com.android.library'
+
+def capacitorAndroidDirCandidates = [
+        new File(projectDir, '../../node_modules/@capacitor/android'),
+        new File(projectDir, '../node_modules/@capacitor/android'),
+        new File(projectDir.parentFile?.parentFile ?: projectDir, 'node_modules/@capacitor/android'),
+        new File(rootProject.projectDir, '../node_modules/@capacitor/android'),
+        new File(rootProject.projectDir, '../../node_modules/@capacitor/android'),
+        new File(rootProject.projectDir.parentFile ?: rootProject.projectDir, 'node_modules/@capacitor/android')
+]
+
+def capacitorAndroidBuildScript = capacitorAndroidDirCandidates
+        .collect { new File(it, 'capacitor-build.gradle') }
+        .find { it.exists() }
+
+if (capacitorAndroidBuildScript != null) {
+    apply from: capacitorAndroidBuildScript
+} else {
+    logger.lifecycle("Capacitor build script not found; continuing with local Gradle config. " +
+            "Searched: ${capacitorAndroidDirCandidates.collect { it.path }.join(', ')}")
+}
+
+android {
+    namespace 'com.tituspeterson.capacitor.cloversdk'
+    compileSdkVersion rootProject.hasProperty('android.compileSdkVersion') ? rootProject.android.compileSdkVersion : 33
+
+    defaultConfig {
+        minSdkVersion rootProject.hasProperty('android.minSdkVersion') ? rootProject.android.minSdkVersion : 22
+        targetSdkVersion rootProject.hasProperty('android.targetSdkVersion') ? rootProject.android.targetSdkVersion : 29
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    sourceSets {
+        main.java.srcDirs = ['src/main/java']
+        main.res.srcDirs = ['src/main/res']
+        main.manifest.srcFile 'src/main/AndroidManifest.xml'
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+    maven { url "https://repo.clover.com/content/groups/public/" }
+    maven { url "https://repo.clover.com/content/repositories/releases/" }
+}
+
+def cloverSdkVersion = project.findProperty('cloverSdkVersion') ?: 'latest.release'
+def cloverSdkLocalAar = project.findProperty('cloverSdkLocalAar')
+def cloverSdkProject = project.rootProject.findProject(':clover-android-sdk')
+
+dependencies {
+    implementation project(':capacitor-android')
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    if (cloverSdkProject != null) {
+        logger.lifecycle("Using Clover SDK from included Gradle project ':clover-android-sdk'")
+        implementation cloverSdkProject
+    } else if (cloverSdkLocalAar) {
+        def aarFile = new File(cloverSdkLocalAar)
+        if (!aarFile.exists()) {
+            throw new GradleException("cloverSdkLocalAar property set but file not found at ${aarFile.path}")
+        }
+        logger.lifecycle("Using Clover SDK from local AAR: ${aarFile.path}")
+        implementation files(aarFile)
+    } else {
+        logger.lifecycle("Using Clover SDK Maven artifact version ${cloverSdkVersion}")
+        implementation "com.clover.sdk:clover-android-sdk:${cloverSdkVersion}"
+    }
+}

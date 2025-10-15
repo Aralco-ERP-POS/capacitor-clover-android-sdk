@@ -1,0 +1,50 @@
+{
+  "name": "capacitor-clover-android-sdk",
+  "version": "1.0.0",
+  "description": "Capacitor plugin that bridges the Clover Android SDK for payments, printing, and barcode scanning.",
+  "author": {
+    "name": "Elias Turner"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/master-aralco/cordova-plugin-clover-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/master-aralco/cordova-plugin-clover-sdk/issues"
+  },
+  "keywords": [
+    "capacitor",
+    "plugin",
+    "clover",
+    "payments"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "android",
+    "dist",
+    "src",
+    "tsconfig.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist",
+    "prepare": "npm run build"
+  },
+  "peerDependencies": {
+    "@capacitor/core": "^5.0.0"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.0",
+    "typescript": "^5.4.0"
+  },
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  }
+}
