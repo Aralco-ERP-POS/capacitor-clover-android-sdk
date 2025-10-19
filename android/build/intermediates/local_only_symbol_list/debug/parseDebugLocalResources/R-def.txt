@@ -1,3 +1,0 @@
-R_DEF: Internal format may change without notice
-local
-string clover_android_sdk_plugin_name
