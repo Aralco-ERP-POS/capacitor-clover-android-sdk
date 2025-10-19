@@ -36,7 +36,7 @@
     "prepare": "npm run build"
   },
   "peerDependencies": {
-    "@capacitor/core": "^5.0.0"
+    "@capacitor/core": ">=5.0.0 <8.0.0"
   },
   "devDependencies": {
     "rimraf": "^5.0.0",
