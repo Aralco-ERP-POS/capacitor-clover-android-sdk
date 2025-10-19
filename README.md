@@ -46,4 +46,19 @@ CloverAndroidSDK.getNewUID()
   .catch(err => console.error('payment failed', err));
 ```
 
+### Listening for hardware barcode scans
+
+```ts
+import { CloverAndroidSDK } from 'capacitor-clover-android-sdk';
+
+const handle = await CloverAndroidSDK.addListener('barcodeScanned', ({ barcode, type }) => {
+  console.log('Barcode', barcode, 'type', type);
+});
+
+// later, when you're done listening
+await handle.remove();
+```
+
+Hardware-triggered scans (for example, holding the left side button on a Clover Flex) emit this event even if you did not call `startScan()`.
+
 Refer to `src/definitions.ts` for full type definitions.

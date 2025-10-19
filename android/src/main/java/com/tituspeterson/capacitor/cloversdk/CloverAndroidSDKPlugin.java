@@ -30,6 +30,7 @@ import com.clover.sdk.v3.payments.Credit;
 import com.clover.sdk.v3.payments.Payment;
 import com.clover.sdk.v3.payments.api.CreditRequestIntentBuilder;
 import com.clover.sdk.v3.payments.api.PaymentRequestIntentBuilder;
+import com.clover.sdk.v3.scanner.BarcodeResult;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -51,6 +52,7 @@ public class CloverAndroidSDKPlugin extends Plugin {
 
     private static final String TAG = "CapacitorCloverSDK";
     private static final String BARCODE_BROADCAST = "com.clover.BarcodeBroadcast";
+    private static final String EVENT_BARCODE_SCANNED = "barcodeScanned";
 
     private static volatile String remoteApplicationId = null;
 
@@ -60,6 +62,18 @@ public class CloverAndroidSDKPlugin extends Plugin {
     private PluginCall pendingBarcodeCall;
     private PluginCall pendingSaleCall;
     private PluginCall pendingRefundCall;
+
+    @Override
+    public void load() {
+        super.load();
+        registerBarcodeScanner();
+    }
+
+    @Override
+    protected void handleOnStart() {
+        super.handleOnStart();
+        registerBarcodeScanner();
+    }
 
     @Override
     protected void handleOnStop() {
@@ -464,7 +478,6 @@ public class CloverAndroidSDKPlugin extends Plugin {
                     .stopScan(getBarcodeSettings(false))
             );
         }
-        unregisterBarcodeScanner();
     }
 
     private class BarcodeReceiver extends BroadcastReceiver {
@@ -473,21 +486,35 @@ public class CloverAndroidSDKPlugin extends Plugin {
             if (intent == null) {
                 return;
             }
-            String action = intent.getAction();
-            if (BARCODE_BROADCAST.equals(action)) {
-                String barcode = intent.getStringExtra("Barcode");
+            BarcodeResult result = new BarcodeResult(intent);
+            if (!result.isBarcodeAction()) {
+                return;
+            }
+
+            String barcode = result.getBarcode();
+            if (barcode == null || barcode.isEmpty()) {
+                Log.w(TAG, "Barcode broadcast missing payload");
+                return;
+            }
+
+            JSObject payload = new JSObject();
+            payload.put("barcode", barcode);
+            String type = result.getType();
+            if (type != null) {
+                payload.put("type", type);
+            }
+            String scannerImpl = result.getScannerImpl();
+            if (scannerImpl != null) {
+                payload.put("scanner", scannerImpl);
+            }
+
+            PluginCall call = pendingBarcodeCall;
+            pendingBarcodeCall = null;
+            if (call != null) {
+                call.resolve(payload);
                 stopBarcodeScanner();
-                PluginCall call = pendingBarcodeCall;
-                pendingBarcodeCall = null;
-                if (call != null) {
-                    if (barcode != null) {
-                        JSObject result = new JSObject();
-                        result.put("barcode", barcode);
-                        call.resolve(result);
-                    } else {
-                        call.reject("Barcode payload missing.");
-                    }
-                }
+            } else {
+                notifyListeners(EVENT_BARCODE_SCANNED, payload);
             }
         }
     }

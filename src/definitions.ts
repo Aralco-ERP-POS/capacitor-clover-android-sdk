@@ -1,3 +1,5 @@
+import type { PluginListenerHandle } from '@capacitor/core';
+
 export interface PrintTextReceiptOptions {
   /**
    * Raw text to print. Use `\r\n` for new lines.
@@ -51,6 +53,12 @@ export interface PrintTextReceiptResult {
   success: boolean;
 }
 
+export interface BarcodeScannedEvent {
+  barcode: string;
+  type?: string;
+  scanner?: string;
+}
+
 export interface CloverAndroidSDKPlugin {
   /**
    * Optional: store the Clover remote application identifier (RAID).
@@ -72,6 +80,11 @@ export interface CloverAndroidSDKPlugin {
    * Start a barcode scan using the Clover device scanner.
    */
   startScan(): Promise<StartScanResult>;
+
+  /**
+   * Listen for hardware-triggered barcode scans.
+   */
+  addListener(eventName: 'barcodeScanned', listenerFunc: (event: BarcodeScannedEvent) => void): Promise<PluginListenerHandle>;
 
   /**
    * Print raw text on the default Clover receipt printer.
